@@ -1,0 +1,21 @@
+name: Deploy Release
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  deploy:
+    runs-on: macos-12
+    steps:
+      - name: Checkout 🛎️
+        uses: actions/checkout@v3
+      - name: Build Cilicon Installer 🛠
+        run: |
+        XC_VRSN=$(grep -m1 "MARKETING_VERSION" Cilicon.xcodeproj/project.pbxproj | awk -F "=" '{print $2}' | awk -F ";" '{print $1}')
+        GH_VRSN=$(git describe --tags `git rev-list --tags --max-count=1`)
+        xcodebuild -scheme Cilicon\ Installer  -derivedDataPath /tmp/cibuild -destination "platform=macOS,arch=arm64"
+      - name: Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: /tmp/cibuild/Build/Products/Debug/Cilicon\ Installer.app
